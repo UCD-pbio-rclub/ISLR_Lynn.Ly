@@ -1,0 +1,37 @@
+---
+title: "Linear Discriminant Analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(ISLR)
+library(MASS)
+```
+
+Linear Discriminant Analysis Lab
+
+```{r}
+lda.fit <-  lda(Direction~Lag1 + Lag2, data=Smarket, subset=Year<2005)
+lda.fit
+plot(lda.fit)
+Smarket.2005 <- subset(Smarket, Year == 2005)
+lda.pred <- predict(lda.fit, Smarket.2005)
+lda.pred[1:5,]
+class(lda.pred)
+data.frame(lda.pred)[1:5,]
+
+table(lda.pred$class, Smarket.2005$Direction)
+mean(lda.pred$class == Smarket.2005$Direction )
+
+```
+
+Reading
+4.4.1 - 4.4.3 and 4.6.3
+
+Questions
+10e and 11d (for both compare the results to those obtained with logistic regression)
+
+10e
+
+
+11d

@@ -1,0 +1,192 @@
+---
+title: "3-1 Intro to Linear Regression"
+output: html_document
+---
+
+# 3.6 Lab Section
+
+```{r setup, include=FALSE}
+library(MASS)
+library(ISLR)
+```
+
+```{r}
+lm.fit <- lm(medv~lstat, data = Boston)
+
+# Or alternatively: 
+# attach(Boston)
+# lm.fit <- lm(medv~lstat)
+
+lm.fit
+summary(lm.fit) # More detailed information
+names(lm.fit)
+
+coef(lm.fit)
+confint(lm.fit)
+
+#The predict() function can be used to produce confidence intervals and prediction intervals for the prediction of medv using a given value of lstat
+
+predict(lm.fit, data.frame(lstat = c(5, 10, 15)), interval = "confidence")
+predict(lm.fit, data.frame(lstat = c(5, 10, 15)), interval = "prediction")
+
+#Prediction interval has to predict the next data point, which may vary widely
+#Confidence interval has to try to fit the mean of the data, which is more constrained
+
+```
+
+```{r}
+attach(Boston)
+plot(lstat, medv)
+abline(lm.fit)
+
+# Other fun plotting options 
+abline (lm.fit ,lwd =3)
+abline (lm.fit ,lwd =3, col ="red ")
+plot(lstat ,medv ,col ="red ")
+plot(lstat ,medv ,pch =20)
+plot(lstat ,medv ,pch ="+")
+plot (1:20 ,1:20, pch =1:20)
+
+
+```
+We can achieve this by using the par() function, which tells R to split the
+display screen into separate panels so that multiple plots can be viewed simultaneously.
+For example, par(mfrow=c(2,2)) divides the plotting region into a 2 × 2 grid of panels.
+
+```{r}
+par(mfrow = c(2,2))
+plot(lm.fit)
+```
+
+Alternatively, we can compute the residuals from a linear regression fit using the residuals() function. The function rstudent() will return the studentized residuals, and we can use this function to plot the residuals against the fitted values. 
+
+```{r}
+plot(predict(lm.fit), residuals(lm.fit))
+plot(predict(lm.fit), rstudent(lm.fit))
+```
+
+The residual plots suggest there may be some non-linearity. Leverage statistics can computed for any number of predictors using the hatvalues() function. 
+
+```{r}
+plot(hatvalues(lm.fit))
+which.max(hatvalues(lm.fit))
+```
+
+The which.max() function identifies the index of the largest elementof a vector. In this case, it tells us which observation has the largest leverage statistic. 
+
+# Problems 
+
+8. This question involves the use of simple linear regression on the Auto data set.
+(a) Use the lm() function to perform a simple linear regression with mpg as the response and horsepower as the predictor. Use the summary() function to print the results. Comment on the output.
+
+```{r}
+attach(Auto)
+lm.fit <- lm(mpg~horsepower)
+summary(lm.fit)
+```
+
+i. Is there a relationship between the predictor and the response?  
+  Yes - Look at the low p-value for horsepower  
+ii. How strong is the relationship between the predictor and the response?
+  Low p-value, high t-value
+iii. Is the relationship between the predictor and the response positive or negative?  
+  It is negative, since the estimate is -0.1  
+iv. What is the predicted mpg associated with a horsepower of 98? What are the associated 95% confidence and prediction intervals?  
+```{r}
+predict(lm.fit, data.frame(horsepower = 98), interval = "confidence")
+predict(lm.fit, data.frame(horsepower = 98), interval = "prediction")
+```
+  
+
+(b) Plot the response and the predictor. Use the abline() function to display the least squares regression line.
+
+```{r}
+plot(mpg, horsepower)
+abline(lm.fit$coef, col = "red") #Something is wrong with this
+```
+
+
+(c) Use the plot() function to produce diagnostic plots of the least squares regression fit. Comment on any problems you see with the fit.
+
+```{r}
+par(mfrow = c(2,2))
+plot(lm.fit)
+```
+
+
+13. In this exercise you will create some simulated data and will fit simple
+linear regression models to it. 
+```{r}
+set.seed(1)
+```
+
+(a) Using the rnorm() function, create a vector, x, containing 100
+observations drawn from a N(0, 1) distribution. This represents
+a feature, X.
+
+```{r}
+x <- rnorm(100)
+```
+
+
+(b) Using the rnorm() function, create a vector, eps, containing 100
+observations drawn from a N(0, 0.25) distribution i.e. a normal
+distribution with mean zero and variance 0.25.
+
+```{r}
+eps <- rnorm(100, sd = sqrt(0.25))
+```
+
+
+(c) Using x and eps, generate a vector y according to the model
+Y = −1 + 0.5X + E
+
+```{r}
+y <- -1 + 0.5 * x + eps
+```
+
+
+What is the length of the vector y? What are the values of β0
+and β1 in this linear model?
+
+
+(d) Create a scatterplot displaying the relationship between x and
+y. Comment on what you observe.
+
+```{r}
+
+```
+
+
+(e) Fit a least squares linear model to predict y using x. Comment
+on the model obtained. How do ˆ β0 and ˆ β1 compare to β0 and
+β1?
+(f) Display the least squares line on the scatterplot obtained in (d).
+Draw the population regression line on the plot, in a different
+color. Use the legend() command to create an appropriate legend.
+(g) Now fit a polynomial regression model that predicts y using x
+and x2. Is there evidence that the quadratic term improves the
+model fit? Explain your answer.
+(h) Repeat (a)–(f) after modifying the data generation process in
+such a way that there is less noise in the data. The model (3.39)
+should remain the same. You can do this by decreasing the variance
+of the normal distribution used to generate the error term
+ in (b). Describe your results.
+(i) Repeat (a)–(f) after modifying the data generation process in
+such a way that there is more noise in the data. The model
+(3.39) should remain the same. You can do this by increasing
+the variance of the normal distribution used to generate the
+error term  in (b). Describe your results.
+(j) What are the confidence intervals for β0 and β1 based on the
+original data set, the noisier data set, and the less noisy data
+set? Comment on your results.
+
+15. This problem involves the Boston data set, which we saw in the lab
+for this chapter. We will now try to predict per capita crime rate
+using the other variables in this data set. In other words, per capita
+crime rate is the response, and the other variables are the predictors.
+(a) For each predictor, fit a simple linear regression model to predict
+the response. Describe your results. In which of the models is
+there a statistically significant association between the predictor
+and the response? Create some plots to back up your assertions.
+

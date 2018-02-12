@@ -1,0 +1,42 @@
+---
+title: "3-3 Intro to Linear Regression"
+output: html_document
+---
+
+Reading:
+3.3
+3.4
+3.6.3 - 3.6.7
+
+Problems:
+3.3
+3.9 d.e,f
+3.10 h (leverage)
+
+
+Optional
+
+Reading:
+3.5
+Problems:
+3.2
+3.14
+
+```{r setup, include=FALSE}
+library(MASS)
+library(ISLR)
+```
+
+3.6.5 Non-linear transformations
+
+`lm()` can also accomodate non-linear transformations of the predictors. 
+
+The function I() is needed since the ^ has a special meaning in a formula; wrapping as we do allows the standard usage in R, which is to raise X to the power 2.
+
+```{r}
+lm.fit2 <- lm(medv~lstat + I(lstat^2), data = Boston)
+summary(lm.fit2)
+
+lm(medv ~ lstat + poly(lstat, 5), data = Boston)
+```
+

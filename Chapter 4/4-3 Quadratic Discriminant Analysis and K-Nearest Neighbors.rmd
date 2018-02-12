@@ -1,0 +1,51 @@
+---
+title: "Quadratic Discriminant Analysis and Naive Bayes"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(class)
+library(ISLR)
+library(MASS)
+```
+
+### K Nearest Neighbors Video
+```{r}
+?knn # Asks for training values, class values for the training set, and k
+attach(Smarket)
+xlag = cbind(Lag1, Lag2)
+train = Year < 2005
+knn.pred <- knn(xlag[train,], xlag[!train,], Direction[train], k = 1)
+table(knn.pred, Direction[!train])
+mean(knn.pred == Direction[!train])
+```
+
+### Quadratic Discriminant Analysis Lab
+```{r}
+qda.fit <- qda(Direction ~ Lag1 + Lag2, data = Smarket, subset = train)
+qda.fit
+
+qda.class <- predict(qda.fit, Smarket.2005)$class
+table(qda.class, Direction.2005)
+mean(qda.class == Direction.2005)
+```
+
+## Caravan Insurance Example
+```{r}
+attach(Caravan)
+summary(Purchase)
+
+# Standardize every variable except purchase to a mean of 0 and std of 1
+standardized.X <- scale(Caravan[, -86])
+test <- 1:1000
+train.X <- standardized.X[-test, ]
+test.X <- standardized.X[test, ]
+train.Y <- Purchase[-test]
+test.Y <- Purchase[test]
+set.seed(1)
+knn.pred <- knn(train.X, test.X, train.Y, k = 1)
+
+mean(test.Y != knn.pred)
+mean(test.Y != "No")
+```
+

@@ -1,0 +1,138 @@
+---
+title: "Logistic Regression"
+output: html_document
+---
+
+```{r}
+library(ISLR)
+names(Smarket)
+summary(Smarket)
+?Smarket
+
+pairs(Smarket, col=Smarket$Direction)
+```
+
+```{r}
+glm.fit <- glm(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume,
+               data=Smarket, family=binomial)
+summary(glm.fit)
+
+glm.probs <- predict(glm.fit, type="response")
+glm.probs[1:5]
+glm.pred <- ifelse(glm.probs>0.5, "Up", "Down")
+table(glm.pred, Smarket$Direction)
+mean(glm.pred == Smarket$Direction)
+
+# 0.5216. We may have overfit on the data
+```
+
+Make a training and test set
+```{r}
+train <-  Smarket$Year < 2005
+glm.fit <- glm(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume,
+               data = Smarket, family = binomial, subset = train)
+glm.probs <- predict(glm.fit, newdata = Smarket[!train,], type = "response")
+glm.pred <- ifelse(glm.probs>0.5, "Up", "Down")
+Direction.2005 <- Smarket$Direction[!train]
+table(glm.pred, Direction.2005)
+mean(glm.pred == Direction.2005)
+#0.48 Even worse than before. Believed to be overfitting again.
+#Do everything again but only using Lag1 and Lag2 as predictors.
+
+```
+```{r}
+glm.fit <- glm(Direction ~ Lag1 + Lag2,
+               data = Smarket, family = binomial, subset = train)
+glm.probs <- predict(glm.fit, newdata = Smarket[!train,], type = "response")
+glm.pred <- ifelse(glm.probs>0.5, "Up", "Down")
+Direction.2005 <- Smarket$Direction[!train]
+table(glm.pred, Direction.2005)
+mean(glm.pred == Direction.2005)
+# 0.559 Prediction has improved. 
+```
+
+Readings:
+4.1-4.3, 4.6.2
+
+Questions: 6, 10a-d, 11a-c,f
+
+6. Supposed we collect data for a group of students in a statistics class with variables X1 = hours studied, X2 = undergrad GPA, and Y = receive an A. We fit a logistic regression and produce estimated coefficient, Bo = -6, B1 = 0.05, B2 = 1.
+
+a) Estimate the probability that a student who studies for 40H and has an undergrad GPA of 3.5 gets an A in the class.
+
+```{r}
+exp(-6 + (0.05 * 40) + (3.5)) / (1 + exp(-6 + (0.05 * 40) + (3.5)))
+```
+
+b) How many hours would the student in part a need to study to have a 50% change of getting an A in the class? 
+
+.5 = exp(-6 + (0.05 * H) + (3.5)) / (1 + exp(-6 + (0.05 * H) + (3.5)))
+Solve for H
+
+10. b. Use the full data set to perform a logistic regression with Direction as the response and the give lag variables plus Volume as predictors. Use the summary function to print the results. Do any of the predictors appear to be statistically significant? 
+```{r}
+summary(Weekly)
+glm.fit <- glm(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume, data = Weekly, family = binomial)
+summary(glm.fit)
+```
+
+Lag2 is significant at p = 0.029
+
+C) Compute the confusion matrix and overall fraction of correct predictions. Explain what the confusion matrix is telling you about the types of mistakes made by logistic regression. 
+
+```{r}
+glm.probs <- predict(glm.fit, type = "response")
+glm.pred <- ifelse(glm.probs > 0.5, "Up", "Down")
+
+table(glm.pred, Weekly$Direction)
+```
+
+Our model is bad at predicting when the real market goes down. It is good at predicting when the real market goes up.
+
+D) Now fit the logistic regression model using a training data period from 1990 to 2008, with Lag2 as the only predictor. Compute the confusion matrix and the overall fraction of correct predictions for the held out data (that is, the data from 2009 and 2010)
+
+```{r}
+train <- Weekly$Year < 2009
+glm.fit <- glm(Direction ~ Lag2, data = Weekly, family = binomial, subset = train)
+
+glm.probs <- predict(glm.fit, newdata = Weekly[!train, ], type = "response")
+glm.pred <- ifelse(glm.probs >0.5, "Up", "Down")
+Direction.2009 <- Weekly$Direction[!train]
+table(glm.pred, Direction.2009)
+(9 + 56) / (9 + 5 + 34 + 56)
+```
+
+11. Develop a model to predict whether a car gets high or low gas mileage.
+A) Create a binary variable, mpg01, that contains a 1 if mpg contains a value above its median, and a 0 if mpg contains a value below. 
+```{r}
+library(tidyverse)
+summary(Auto)
+mpg01 <- Auto$mpg > median(Auto$mpg)
+mpg01 <- ifelse(mpg01, 1, 0)
+Auto2 <- mutate(Auto, mpg01 = mpg01)
+summary(Auto2)
+
+cor(Auto2[, -9])
+```
+
+Strongly negatively correlated with cyl, displacement, weight
+
+C) Split the data into a training set and a test set. 
+```{r}
+train = (Auto2$year%%2 == 0)  # if the year is even
+test = !train
+Auto2.train = Auto2[train, ]
+Auto2.test = Auto2[test, ]
+mpg01.test = mpg01[test]
+```
+
+F) Perform logistic regression on the training data in order to predict mpg01 using the variables that seemed most associated with mpg01 in b. What is the test error of the model obtained? 
+
+```{r}
+glm.fit <- glm(mpg01 ~ cylinders + displacement + weight, data = Auto2, family = binomial, subset = train)
+glm.probs <- predict(glm.fit, Auto2.test, type = "response")
+glm.pred <- ifelse(glm.probs > 0.5, 1, 0)
+table(glm.pred, Auto2.test$mpg01)
+mean(glm.pred != mpg01.test)
+```
+14% test error rate using cyl, disp, and weight as predictors
