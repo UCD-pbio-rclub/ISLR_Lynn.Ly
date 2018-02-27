@@ -1,0 +1,100 @@
+---
+title: "Chapter 6-1"
+author: "Lynn Ly"
+date: "February 13, 2018"
+output: html_document
+---
+
+Linear Model Selection and Best Subset Selection
+Forward Stepwise Selection
+Backward Stepwise Selection
+
+### 6.5.1 Best Subset Selection
+```{r}
+library(ISLR)
+fix(Hitters) # Not sure why fix is necessary
+
+sum(is.na(Hitters$Salary))
+Hitters <- na.omit(Hitters)
+sum(is.na(Hitters))
+```
+`regsubsets()` performs best subset selection by IDing the best model with a given # of predictors. (RSS) `summary()` gives the best set of variables for each model size. 
+
+```{r}
+library(leaps)
+regfit.full <- regsubsets(Salary~., Hitters)
+reg.summary <- summary(regfit.full)
+```
+
+An asterisk indicates that a given variable is included in the corresponding model. e.g. The best model with up to 2 variables will contain Hits and CRBI. `summary()` also returns R^2, RSS, adjusted R, Cp, and BIC. Let's plot them. 
+
+```{r}
+par(mfrow = c(2, 2)) # Format for visualizing plots
+plot(reg.summary$rss, xlab = "Number of Variables", ylab = "RSS", type = "l") # Type = l means connect the plotted points with lines
+plot(reg.summary$adjr2, xlab = "Number of Variables", ylab = "Adjusted RSq", type = "l")
+
+which.max(reg.summary$adjr2)
+points(11, reg.summary$adjr2[11], col = "red", cex = 2, pch = 20)
+```
+`regsubsets()` has a built in plot command
+```{r}
+plot(regfit.full, scale = "bic")
+coef(regfit.full, 6)
+```
+
+### 6.5.2 Forward and Backward Stepwise Selection
+
+```{r}
+regfit.fwd <- regsubsets(Salary~., data = Hitters, nvmax = 19, method = "forward")
+```
+
+The results from forward, backward, and best subset may be different at some model sizes. 
+
+Q1. We perform best subset, forward stepwise, and backward stepwise selection on a single data set. For each approach, we obtain p + 1 models, containing 0, 1, 2, ..., p predictors. Explain your answers:  
+a) Which of the three models with k predictors has the smallest training RSS?  
+The best subset model should have the smallest training RSS because it is "allowed" to both add and remove predictors, according to what maximizes training RSS. The other two methods may be unlucky and 'choose' unideal predictors to add / drop at previous k. 
+
+b) Which of the three models with k predictors has the smallest test RSS?  
+The best subset model should have the smallest test RSS, because of the above I think it would be more likely to be more accurate. But not always, it still depends on 'luck' 
+
+c) Only write out the true statements:
+i. the predictors in the k-variable model identified by forward stepwise are a subset of the predictors in the (k+1)-variable model identified by forward stepwise selections.  
+ii. the predictors in the k-variable model id'd by backward stepwise are a subset of those in the k+1 model
+
+Q8. We will generate simulated data and use it to perform best subset selection.  
+a) Generate a predictor X of length n = 100, as well as a noise vector E of length n = 100.
+```{r}
+set.seed(1)
+X <- rnorm(100)
+E <- rnorm(100)
+```
+
+b) Generate a response vector Y of length 100 according to the model Y = B0 + B1X + B2X2 + B3X3 + E
+
+```{r}
+B0 <- -2
+B1 <- 3
+B2 <- 1
+B3 <- 0.5
+
+Y <- B0 + B1 * X + B2 * X^2 + B3 * X^2 + E 
+```
+
+c) Use  regsubsets to perform best subset selection.
+
+```{r}
+library(leaps)
+data.full = data.frame(y = Y, x = X)
+mod.full = regsubsets(y ~ poly(x, 10, raw = T), data = data.full, nvmax = 10)
+mod.summary = summary(mod.full)
+
+# Find the model size for best cp, BIC and adjr2
+which.min(mod.summary$cp)
+```
+
+```{r}
+plot(mod.summary$cp, xlab = "Subset Size", ylab = "Cp", pch = 20, type = "l")
+points(3, mod.summary$cp[3], pch = 4, col = "red", lwd = 7)
+```
+
+Cool, it picked the right model!
